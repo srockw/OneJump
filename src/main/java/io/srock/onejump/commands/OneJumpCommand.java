@@ -5,18 +5,19 @@ import dev.jorel.commandapi.arguments.*;
 import dev.jorel.commandapi.wrappers.Rotation;
 import io.srock.onejump.data.Jump;
 import io.srock.onejump.data.JumpData;
+import io.srock.onejump.inventory.JumpInventory;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
 
 public class OneJumpCommand {
   public static final String EDIT_PERMISSION = "onejump.edit";
 
-  private static final Argument jumpNameArgument = new GreedyStringArgument("name")
+  private static final Argument<String> jumpNameArgument = new GreedyStringArgument("name")
     .replaceSuggestions(ArgumentSuggestions.strings((sender) -> {
-      return JumpData.getJumps().stream().map(it -> it.name()).toList().toArray(new String[0]);
+      return JumpData.getJumps().stream().map(Jump::name).toList().toArray(new String[0]);
     }));
+
+  private static final Argument<Integer> pageArgument = new IntegerArgument("page", 1);
 
   private static final CommandAPICommand add = new CommandAPICommand("add")
     .withPermission(EDIT_PERMISSION)
@@ -41,8 +42,7 @@ public class OneJumpCommand {
       spawn.setYaw(angle.getYaw());
       spawn.setPitch(angle.getPitch());
 
-      var jump = new Jump(diff, name, spawn);
-      JumpData.add(jump);
+      JumpData.add(new Jump(diff, name, spawn));
       sender.sendMessage("§aAdded jump §b\"%s\"§a.".formatted(name));
     });
 
@@ -68,44 +68,27 @@ public class OneJumpCommand {
         var jump = JumpData.get(name);
 
         if (jump != null) {
-          sender.sendMessage("§aTeleporting to §b\"%s\"§a.".formatted(name));
+          player.sendMessage("§aTeleporting to §b\"%s\"§a.".formatted(name));
           player.teleport(jump.spawn());
         } else {
-          sender.sendMessage("§cJump §b\"%s\" §cdoesn't exist.".formatted(name));
+          player.sendMessage("§cJump §b\"%s\" §cdoesn't exist.".formatted(name));
         }
       }
     });
 
-  private static final CommandAPICommand list = new CommandAPICommand("list")
-    .withOptionalArguments(new IntegerArgument("page", 1))
+  public static final CommandAPICommand menu = new CommandAPICommand("menu")
+    .withOptionalArguments(pageArgument)
     .executes((sender, args) -> {
-      var jumps = JumpData.getJumps();
-
-      if (jumps.size() < 1) {
-        sender.sendMessage("§cNo jumps are available.");
-        return;
+      if (sender instanceof Player player) {
+        player.openInventory(new JumpInventory(
+          (int) args.getOrDefault("page", 1) - 1
+        ).getInventory());
       }
-      var page = (int) args.getOrDefault("page", 0);
-      var maxPage = (int) Math.ceil(jumps.size() / 10);
-
-      if (page > maxPage) {
-        page = maxPage;
-      }
-
-      var offset = page * 10;
-      var lines = new ArrayList<String>();
-
-      for (int i = offset; i < jumps.size(); i++) {
-        lines.add("  §6%d §7- §b\"%s\"".formatted(i - offset + 1, jumps.get(i).name()));
-      }
-
-      sender.sendMessage("§9Onejumps available §e(page %d)".formatted(page + 1));
-      sender.sendMessage(lines.toArray(new String[0]));
     });
 
   public static void register() {
     new CommandAPICommand("onejump")
-      .withSubcommands(warp, list, add, remove)
+      .withSubcommands(menu, warp, add, remove)
       .register();
   }
 }
