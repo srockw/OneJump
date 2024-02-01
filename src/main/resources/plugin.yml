@@ -1,0 +1,9 @@
+name: OneJump
+version: '${version}'
+main: io.srock.onejump.OneJump
+api-version: '1.20'
+
+permissions:
+  onejump.edit:
+    description: "Allows adding, removing and editing of onejumps."
+    default: op
