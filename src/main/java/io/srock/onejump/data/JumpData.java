@@ -10,6 +10,7 @@ import java.util.List;
 public class JumpData {
   private static final File dataFile = new File("./plugins/onejump/jumps.yml");
   private static final ArrayList<Jump> jumps = new ArrayList<>();
+  private static int nextJumpId = 0;
   private static YamlConfiguration config;
 
   public static void load() {
@@ -18,6 +19,7 @@ public class JumpData {
 
     if (data != null) {
       jumps.addAll((List<Jump>) data);
+      nextJumpId = jumps.size();
     }
   }
 
@@ -33,6 +35,15 @@ public class JumpData {
 
   public static List<Jump> getJumps() {
     return jumps;
+  }
+
+  @Nullable
+  public static Jump get(int id) {
+    for (Jump jump : jumps) {
+      if (id == jump.id()) return jump;
+    }
+
+    return null;
   }
 
   @Nullable
@@ -58,6 +69,7 @@ public class JumpData {
 
     if (jump != null) {
       jumps.remove(jump);
+      nextJumpId = jump.id();
       return jump;
     }
 
@@ -68,7 +80,10 @@ public class JumpData {
     return get(name) != null;
   }
 
-  public static void clear() {
-    jumps.clear();
+  public static int getNextJumpId() {
+    while (get(nextJumpId) != null) {
+      nextJumpId++;
+    }
+    return nextJumpId;
   }
 }
