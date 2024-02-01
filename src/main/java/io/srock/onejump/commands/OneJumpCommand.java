@@ -17,8 +17,6 @@ public class OneJumpCommand {
       return JumpData.getJumps().stream().map(Jump::name).toList().toArray(new String[0]);
     }));
 
-  private static final Argument<Integer> pageArgument = new IntegerArgument("page", 1);
-
   private static final CommandAPICommand add = new CommandAPICommand("add")
     .withPermission(EDIT_PERMISSION)
     .withArguments(new IntegerArgument("difficulty", 0))
@@ -77,7 +75,7 @@ public class OneJumpCommand {
     });
 
   public static final CommandAPICommand menu = new CommandAPICommand("menu")
-    .withOptionalArguments(pageArgument)
+    .withOptionalArguments(new IntegerArgument("page", 1))
     .executes((sender, args) -> {
       if (sender instanceof Player player) {
         player.openInventory(new JumpInventory(
